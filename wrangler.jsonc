@@ -1,0 +1,14 @@
+{
+    "name": "forkchat",
+    "compatibility_date": "2025-06-16",
+    "assets": {
+        "directory": "./dist/",
+        "not_found_handling": "single-page-application"
+      },
+    "routes": [
+        {
+            "pattern": "forkchat.iamfitsum.com",
+            "custom_domain": true
+          }
+    ]
+}
