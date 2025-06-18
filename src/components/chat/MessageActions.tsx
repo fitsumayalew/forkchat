@@ -18,6 +18,7 @@ interface MessageActionsProps {
   onBranch?: (messageId: string) => void
   onRetry?: (messageId: string) => void
   onEdit?: (messageId: string) => void
+  readOnlyMode?: boolean
 }
 
 export function MessageActions({ 
@@ -29,7 +30,8 @@ export function MessageActions({
   onCopy, 
   onBranch, 
   onRetry,
-  onEdit
+  onEdit,
+  readOnlyMode = false
 }: MessageActionsProps) {
   const [copied, setCopied] = useState(false)
 
@@ -88,7 +90,7 @@ export function MessageActions({
           )}
         </Button>
         
-        {canBranch && (
+        {!readOnlyMode && canBranch && (
           <Button
             variant="ghost"
             size="sm"
@@ -100,7 +102,7 @@ export function MessageActions({
           </Button>
         )}
         
-        {canRetry && (
+        {!readOnlyMode && canRetry && (
           <Button
             variant="ghost"
             size="sm"
@@ -138,7 +140,7 @@ export function MessageActions({
           )}
         </Button>
         
-        {onEdit && (
+        {!readOnlyMode && onEdit && (
           <Button
             variant="ghost"
             size="sm"
@@ -150,15 +152,17 @@ export function MessageActions({
           </Button>
         )}
         
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRetry}
-          className="h-8 px-3 text-muted-foreground hover:text-foreground"
-        >
-          <RotateCcw className="h-3 w-3 mr-1" />
-          Retry
-        </Button>
+        {!readOnlyMode && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRetry}
+            className="h-8 px-3 text-muted-foreground hover:text-foreground"
+          >
+            <RotateCcw className="h-3 w-3 mr-1" />
+            Retry
+          </Button>
+        )}
       </div>
     )
   }
@@ -190,21 +194,21 @@ export function MessageActions({
           )}
         </DropdownMenuItem>
         
-        {canBranch && (
+        {!readOnlyMode && canBranch && (
           <DropdownMenuItem onClick={handleBranch} className="cursor-pointer">
             <GitBranch className="h-3 w-3 mr-2" />
             Branch
           </DropdownMenuItem>
         )}
         
-        {canRetry && (
+        {!readOnlyMode && canRetry && (
           <DropdownMenuItem onClick={handleRetry} className="cursor-pointer">
             <RotateCcw className="h-3 w-3 mr-2" />
             Retry
           </DropdownMenuItem>
         )}
 
-        {onEdit && (
+        {!readOnlyMode && onEdit && (
           <DropdownMenuItem onClick={handleEdit} className="cursor-pointer">
             <Edit className="h-3 w-3 mr-2" />
             Edit

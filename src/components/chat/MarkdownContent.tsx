@@ -29,6 +29,7 @@ interface MarkdownContentProps {
   onRetry?: (messageId: string) => void
   onEdit?: (messageId: string) => void
   onEditSave?: (messageId: string, newContent: string, model?: string) => void
+  readOnlyMode?: boolean
 }
 
 export function MarkdownContent({ 
@@ -37,7 +38,8 @@ export function MarkdownContent({
   onBranch, 
   onRetry,
   onEdit,
-  onEditSave
+  onEditSave,
+  readOnlyMode = false
 }: MarkdownContentProps) {
   if (message.role === 'user') {
     return (
@@ -50,6 +52,7 @@ export function MarkdownContent({
         onRetry={onRetry}
         onEdit={onEdit}
         onEditSave={onEditSave}
+        readOnlyMode={readOnlyMode}
       />
     )
   }
@@ -61,6 +64,7 @@ export function MarkdownContent({
         onCopy={onCopy}
         onBranch={onBranch}
         onRetry={onRetry}
+        readOnlyMode={readOnlyMode}
       />
     )
   }

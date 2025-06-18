@@ -553,3 +553,48 @@ export const updateMessage = internalMutation({
     await ctx.db.patch(messageId, { parts, ...(status && { status }) });
   },
 });
+
+// Updates a message with streaming content during HTTP streaming
+export const updateStreamingContent = internalMutation({
+  args: {
+    messageId: v.string(),
+    content: v.string(),
+    isComplete: v.boolean(),
+  },
+  handler: async (ctx, { messageId, content, isComplete }) => {
+    // Find the message by messageId - need to query without userId since this is internal
+    const message = await ctx.db
+      .query("messages")
+      .filter((q) => q.eq(q.field("messageId"), messageId))
+      .unique();
+
+    if (!message) {
+      throw new Error("Message not found");
+    }
+
+    const now = Date.now();
+
+    // Update the message with new content
+    await ctx.db.patch(message._id, {
+      parts: [{ type: "text" as const, text: content }],
+      status: isComplete ? "done" as const : "streaming" as const,
+      updated_at: now,
+    });
+
+    // If complete, update the thread status as well
+    if (isComplete) {
+      const thread = await ctx.db
+        .query("threads")
+        .filter((q) => q.eq(q.field("threadId"), message.threadId))
+        .unique();
+
+      if (thread) {
+        await ctx.db.patch(thread._id, {
+          generationStatus: "completed" as const,
+          updatedAt: now,
+          lastMessageAt: now,
+        });
+      }
+    }
+  },
+});

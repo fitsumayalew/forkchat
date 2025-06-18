@@ -3,8 +3,9 @@ import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar'
 import { Button } from '../components/ui/button'
+import { ScrollArea } from '../components/ui/scroll-area'
 import { MarkdownContent } from '../components/chat/MarkdownContent'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {   Plus, User } from 'lucide-react'
 
 export const Route = createFileRoute('/share/$threadId')({
@@ -15,16 +16,43 @@ function ShareRouteComponent() {
   const { threadId } = Route.useParams()
   const router = useRouter()
   const [copying, setCopying] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
   
   const thread = useQuery(api.threads.queries.getPublicThread, { threadId })
   const messages = useQuery(api.messages.queries.getPublicByThreadId, { threadId })
   const currentUser = useQuery(api.auth.getCurrentUser, {})
   const copySharedThread = useMutation(api.threads.mutations.copySharedThread)
 
+  // Scroll to bottom when messages load
+  useEffect(() => {
+    if (messages && scrollContainerRef.current) {
+      // Find the viewport within the ScrollArea
+      const viewport = scrollContainerRef.current.querySelector('[data-radix-scroll-area-viewport]') as HTMLElement
+      if (viewport) {
+        // Use setTimeout to ensure content is rendered
+        setTimeout(() => {
+          viewport.scrollTop = viewport.scrollHeight
+        }, 100)
+      }
+    }
+  }, [messages])
+
   // Helper function to extract text content from messages
   const getMessageText = (message: any) => {
     if (message.role === 'user') {
-      return message.content || ''
+      // User messages might have content OR parts structure
+      if (message.content) {
+        return message.content
+      }
+      // Fallback to parts structure for user messages
+      return message.parts
+        ?.filter((part: any) => part.type === 'text')
+        ?.map((part: any) => part.text)
+        ?.join('\n\n') || ''
     } else {
       // Assistant messages have parts array
       return message.parts
@@ -77,10 +105,10 @@ function ShareRouteComponent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto p-4">
-        {/* Header with sharer info and copy button */}
-        <div className="bg-card border rounded-lg p-6 mb-6">
+    <div className="h-screen bg-background flex flex-col">
+      {/* Header with sharer info and copy button */}
+      <div className="border-b bg-card p-4">
+        <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Avatar className="h-12 w-12">
@@ -119,36 +147,43 @@ function ShareRouteComponent() {
             )}
           </div>
         </div>
+      </div>
 
-        {/* Messages */}
-        <div className="space-y-6">
-          {messages && messages.map((message) => (
-            <div key={message._id} className="w-full">
-              <MarkdownContent 
-                message={{
-                  messageId: message._id,
-                  role: message.role as 'user' | 'assistant',
-                  parts: message.role === 'user' 
-                    ? [{ type: 'text', text: getMessageText(message) }]
-                    : (message.parts || [])
-                        .filter((part: any) => part.type === 'text' || part.type === 'reasoning')
-                        .map((part: any) => ({
-                          type: part.type,
-                          text: part.type === 'text' ? part.text : part.reasoning
-                        })),
-                  status: 'done',
-                  created_at: message._creationTime
-                }}
-              />
-            </div>
-          ))}
+      {/* Messages */}
+      <ScrollArea className="h-[80%]" ref={scrollContainerRef}>
+        <div className="max-w-4xl mx-auto p-4">
+          <div className="space-y-6">
+            {messages && messages.map((message) => (
+              <div key={message._id} className="w-full">
+                <MarkdownContent 
+                  message={{
+                    messageId: message._id,
+                    role: message.role as 'user' | 'assistant',
+                    parts: message.role === 'user' 
+                      ? [{ type: 'text', text: getMessageText(message) }]
+                      : (message.parts || [])
+                          .filter((part: any) => part.type === 'text' || part.type === 'reasoning')
+                          .map((part: any) => ({
+                            type: part.type,
+                            text: part.type === 'text' ? part.text : part.reasoning
+                          })),
+                    status: 'done',
+                    created_at: message._creationTime
+                  }}
+                  onCopy={handleCopy}
+                  readOnlyMode={true}
+                />
+              </div>
+            ))}
+          </div>
+
+        
         </div>
-
+      </ScrollArea>
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-muted-foreground">
-          <p>This is a shared conversation. {currentUser ? "You can add it to your chats to continue the conversation." : "Sign in to add this to your chats."}</p>
-        </div>
-      </div>
+            <p>This is a shared conversation. {currentUser ? "You can add it to your chats to continue the conversation." : "Sign in to add this to your chats."}</p>
+          </div>
     </div>
   )
 } 

@@ -76,12 +76,6 @@ export function ThreadItem({
     // Don't navigate if we're editing, dragging, or clicking on action buttons
     if (isEditing || isDragging) return
     
-    // Check if the click target is a button or inside a button
-    const target = e.target as HTMLElement
-    if (target.closest('button') || target.closest('[role="button"]')) {
-      return
-    }
-
     // Navigate to the thread
     navigate({ to: '/chat/$threadId', params: { threadId: thread.threadId } })
   }

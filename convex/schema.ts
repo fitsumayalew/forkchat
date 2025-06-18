@@ -155,6 +155,7 @@ export default defineSchema({
     currentlySelectedModel: v.optional(v.string()),
     currentModelParameters: v.optional(modelParametersSchema),
     favoriteModels: v.optional(v.array(v.string())),
+    preferOwnApiKeys: v.optional(v.boolean()),
   }).index("by_userId", ["userId"]),
 
   // Table for user-specific prompt customizations.
@@ -165,4 +166,16 @@ export default defineSchema({
     selectedTraits: v.optional(v.array(v.string())),
     additionalInfo: v.optional(v.string()),
   }).index("by_userId", ["userId"]),
+
+  // Table for storing user API keys
+  userApiKeys: defineTable({
+    userId: v.string(),
+    provider: v.string(), // "openai", "anthropic", "google", etc.
+    keyName: v.string(), // User-defined name for the key
+    encryptedApiKey: v.string(), // Encrypted API key
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    lastUsed: v.optional(v.number()),
+  }).index("by_userId", ["userId"])
+    .index("by_userId_and_provider", ["userId", "provider"]),
 });

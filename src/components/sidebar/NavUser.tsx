@@ -14,8 +14,9 @@ import {
   useSidebar,
   SidebarMenuButton,
 } from "../ui/sidebar";
-import { BadgeCheck, ChevronsUpDown, LogOut } from "lucide-react";
+import { BadgeCheck, ChevronsUpDown, LogOut, Settings } from "lucide-react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { Link } from "@tanstack/react-router";
 
 export function NavUser({
   user,
@@ -73,6 +74,12 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
+              <DropdownMenuItem asChild>
+                <Link to="/settings">
+                  <Settings />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account

@@ -87,3 +87,30 @@ export const getPaginatedMessages = query({
     return messages;
   },
 });
+
+/**
+ * account.getUserApiKeys
+ *
+ * Retrieves the current user's API keys (without exposing the actual key values)
+ */
+export const getUserApiKeys = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const apiKeys = await ctx.db
+      .query("userApiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    // Return API keys without the encrypted values for security
+    return apiKeys.map(key => ({
+      _id: key._id,
+      provider: key.provider,
+      keyName: key.keyName,
+      isActive: key.isActive,
+      createdAt: key.createdAt,
+      lastUsed: key.lastUsed,
+    }));
+  },
+});

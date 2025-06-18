@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AuthIndexRouteImport } from './routes/_auth/index'
 import { Route as ShareThreadIdRouteImport } from './routes/share.$threadId'
+import { Route as AuthSettingsRouteImport } from './routes/_auth/settings'
 import { Route as AuthChatThreadIdRouteImport } from './routes/_auth/chat.$threadId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -34,6 +35,11 @@ const ShareThreadIdRoute = ShareThreadIdRouteImport.update({
   path: '/share/$threadId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthSettingsRoute = AuthSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthChatThreadIdRoute = AuthChatThreadIdRouteImport.update({
   id: '/chat/$threadId',
   path: '/chat/$threadId',
@@ -42,12 +48,14 @@ const AuthChatThreadIdRoute = AuthChatThreadIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
+  '/settings': typeof AuthSettingsRoute
   '/share/$threadId': typeof ShareThreadIdRoute
   '/': typeof AuthIndexRoute
   '/chat/$threadId': typeof AuthChatThreadIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/settings': typeof AuthSettingsRoute
   '/share/$threadId': typeof ShareThreadIdRoute
   '/': typeof AuthIndexRoute
   '/chat/$threadId': typeof AuthChatThreadIdRoute
@@ -56,19 +64,26 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_auth': typeof AuthRouteWithChildren
   '/login': typeof LoginRoute
+  '/_auth/settings': typeof AuthSettingsRoute
   '/share/$threadId': typeof ShareThreadIdRoute
   '/_auth/': typeof AuthIndexRoute
   '/_auth/chat/$threadId': typeof AuthChatThreadIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/share/$threadId' | '/' | '/chat/$threadId'
+  fullPaths:
+    | '/login'
+    | '/settings'
+    | '/share/$threadId'
+    | '/'
+    | '/chat/$threadId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/share/$threadId' | '/' | '/chat/$threadId'
+  to: '/login' | '/settings' | '/share/$threadId' | '/' | '/chat/$threadId'
   id:
     | '__root__'
     | '/_auth'
     | '/login'
+    | '/_auth/settings'
     | '/share/$threadId'
     | '/_auth/'
     | '/_auth/chat/$threadId'
@@ -110,6 +125,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShareThreadIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_auth/settings': {
+      id: '/_auth/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthSettingsRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/chat/$threadId': {
       id: '/_auth/chat/$threadId'
       path: '/chat/$threadId'
@@ -121,11 +143,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthRouteChildren {
+  AuthSettingsRoute: typeof AuthSettingsRoute
   AuthIndexRoute: typeof AuthIndexRoute
   AuthChatThreadIdRoute: typeof AuthChatThreadIdRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
+  AuthSettingsRoute: AuthSettingsRoute,
   AuthIndexRoute: AuthIndexRoute,
   AuthChatThreadIdRoute: AuthChatThreadIdRoute,
 }

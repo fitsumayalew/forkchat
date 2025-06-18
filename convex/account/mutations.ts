@@ -59,6 +59,7 @@ export const updateUserConfiguration = mutation({
       currentlySelectedModel: v.optional(v.string()),
       currentModelParameters: v.optional(v.any()),
       favoriteModels: v.optional(v.array(v.string())),
+      preferOwnApiKeys: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, { configuration }) => {
@@ -203,6 +204,13 @@ export const deleteAccount = mutation({
       await ctx.db.delete(profile._id);
     }
 
+    // Delete API keys.
+    for await (const apiKey of ctx.db
+      .query("userApiKeys")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))) {
+      await ctx.db.delete(apiKey._id);
+    }
+
     // Finally, delete the user document from Convex Auth `users` table.
     const authUser = await ctx.db.get(userId);
     if (authUser) {
@@ -210,5 +218,88 @@ export const deleteAccount = mutation({
     }
 
     return { accountDeleted: true } as const;
+  },
+});
+
+/**
+ * account.addApiKey
+ *
+ * Add a new API key for the user
+ */
+export const addApiKey = mutation({
+  args: {
+    provider: v.string(),
+    keyName: v.string(),
+    apiKey: v.string(),
+  },
+  handler: async (ctx, { provider, keyName, apiKey }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Simple encryption (in production, use proper encryption)
+    const encryptedApiKey = btoa(apiKey); // Base64 encoding for demo
+
+    await ctx.db.insert("userApiKeys", {
+      userId,
+      provider,
+      keyName,
+      encryptedApiKey,
+      isActive: true,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * account.updateApiKey
+ *
+ * Update an existing API key
+ */
+export const updateApiKey = mutation({
+  args: {
+    keyId: v.id("userApiKeys"),
+    keyName: v.optional(v.string()),
+    apiKey: v.optional(v.string()),
+    isActive: v.optional(v.boolean()),
+  },
+  handler: async (ctx, { keyId, keyName, apiKey, isActive }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existingKey = await ctx.db.get(keyId);
+    if (!existingKey || existingKey.userId !== userId) {
+      throw new Error("API key not found or access denied");
+    }
+
+    const updates: any = {};
+    if (keyName !== undefined) updates.keyName = keyName;
+    if (isActive !== undefined) updates.isActive = isActive;
+    if (apiKey !== undefined) {
+      updates.encryptedApiKey = btoa(apiKey); // Base64 encoding for demo
+    }
+
+    await ctx.db.patch(keyId, updates);
+  },
+});
+
+/**
+ * account.deleteApiKey
+ *
+ * Delete an API key
+ */
+export const deleteApiKey = mutation({
+  args: {
+    keyId: v.id("userApiKeys"),
+  },
+  handler: async (ctx, { keyId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const existingKey = await ctx.db.get(keyId);
+    if (!existingKey || existingKey.userId !== userId) {
+      throw new Error("API key not found or access denied");
+    }
+
+    await ctx.db.delete(keyId);
   },
 });

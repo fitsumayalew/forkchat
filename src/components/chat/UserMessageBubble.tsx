@@ -14,6 +14,7 @@ interface UserMessageBubbleProps {
   onRetry?: (messageId: string) => void
   onEdit?: (messageId: string) => void
   onEditSave?: (messageId: string, newContent: string, model?: string) => void
+  readOnlyMode?: boolean
 }
 
 export function UserMessageBubble({ 
@@ -24,7 +25,8 @@ export function UserMessageBubble({
   onCopy,
   onRetry,
   onEdit,
-  onEditSave
+  onEditSave,
+  readOnlyMode = false
 }: UserMessageBubbleProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(content)
@@ -111,10 +113,11 @@ export function UserMessageBubble({
                     content={content}
                     type="user"
                     canBranch={false}
-                    canRetry={true}
+                    canRetry={!readOnlyMode}
                     onCopy={onCopy}
-                    onRetry={onRetry}
-                    onEdit={handleEdit}
+                    onRetry={readOnlyMode ? undefined : onRetry}
+                    onEdit={readOnlyMode ? undefined : handleEdit}
+                    readOnlyMode={readOnlyMode}
                   />
                 </div>
               )}

@@ -33,6 +33,22 @@ export function ModelSelector() {
   const selectedModel = (userConfig?.currentlySelectedModel as ModelId) || 'claude-4-sonnet'
   const favoriteModels = userConfig?.favoriteModels || []
 
+  // Add safety check for selectedModelData
+  const selectedModelData = models[selectedModel]
+  
+  // Fallback to first available model if selected model doesn't exist
+  const safeSelectedModelData = selectedModelData || Object.values(models).find(model => !model.disabled)
+  
+  // If no valid model found, create a fallback
+  const fallbackModel = {
+    name: 'No Model Available',
+    provider: 'Unknown',
+    shortDescription: 'No valid model found',
+    features: []
+  }
+  
+  const currentModelData = safeSelectedModelData || fallbackModel
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -47,14 +63,27 @@ export function ModelSelector() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Auto-correct invalid model selection
+  useEffect(() => {
+    if (!selectedModelData && safeSelectedModelData && updateUserConfig) {
+      // Find the model ID for the safe selected model data
+      const validModelId = Object.entries(models).find(([, model]) => model === safeSelectedModelData)?.[0]
+      if (validModelId) {
+        updateUserConfig({
+          configuration: {
+            currentlySelectedModel: validModelId
+          }
+        })
+      }
+    }
+  }, [selectedModelData, safeSelectedModelData, updateUserConfig])
+
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
       // Focus search input when dropdown opens
       setTimeout(() => searchInputRef.current?.focus(), 50)
     }
   }, [isOpen])
-
-  const selectedModelData = models[selectedModel]
 
   const filteredModels = useMemo(() => {
     let filtered = Object.entries(models).filter(([, model]) => !model.disabled)
@@ -367,11 +396,11 @@ export function ModelSelector() {
         className="flex items-center space-x-2 px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg hover:bg-muted dark:hover:bg-muted transition-colors text-sm"
       >
         <div className="flex items-center space-x-2">
-          <span className={`px-2 py-0.5 rounded text-xs font-medium text-white bg-gradient-to-r ${getProviderColor(selectedModelData.provider)}`}>
-            <span className="mr-1">{getProviderIcon(selectedModelData.provider)}</span>
-            {selectedModelData.provider}
+          <span className={`px-2 py-0.5 rounded text-xs font-medium text-white bg-gradient-to-r ${getProviderColor(currentModelData.provider)}`}>
+            <span className="mr-1">{getProviderIcon(currentModelData.provider)}</span>
+            {currentModelData.provider}
           </span>
-          <span className="font-medium text-foreground dark:text-foreground">{selectedModelData.name}</span>
+          <span className="font-medium text-foreground dark:text-foreground">{currentModelData.name}</span>
           {favoriteModels.includes(selectedModel) && (
             <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 24 24">
               <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />

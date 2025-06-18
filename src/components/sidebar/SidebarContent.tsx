@@ -422,6 +422,7 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
         </div>
       </div>
 
+
       {/* Scrollable Content */}
       <ScrollArea className="flex-1 h-full">
         {isLoading ? (
