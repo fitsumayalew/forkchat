@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { ModelSelector } from './ModelSelector'
 import { useModelSelectorPosition } from '../../contexts/ModelSelectorContext'
 import { GripVertical } from 'lucide-react'
@@ -8,8 +8,7 @@ interface DraggableModelSelectorProps {
 }
 
 export function DraggableModelSelector({ location }: DraggableModelSelectorProps) {
-  const { position, setPosition, isDragging, setIsDragging } = useModelSelectorPosition()
-  const [draggedOver, setDraggedOver] = useState(false)
+  const { position, isDragging, setIsDragging } = useModelSelectorPosition()
 
   // Only render if this is the correct location for the ModelSelector
   if (position !== location) {

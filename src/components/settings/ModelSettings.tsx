@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { models } from "@/lib/models";
-import { Heart, Plus, Trash2, Edit, Eye, EyeOff, Key } from "lucide-react";
+import { Heart, Plus, Trash2, Key } from "lucide-react";
 import { toast } from "sonner";
 
 type ModelId = keyof typeof models;
@@ -30,7 +30,6 @@ export function ModelSettings() {
   const userApiKeys = useQuery(api.account.queries.getUserApiKeys);
   const updateUserConfig = useMutation(api.account.mutations.updateUserConfiguration);
   const addApiKey = useMutation(api.account.mutations.addApiKey);
-  const updateApiKey = useMutation(api.account.mutations.updateApiKey);
   const deleteApiKey = useMutation(api.account.mutations.deleteApiKey);
   
   const [selectedModel, setSelectedModel] = useState<ModelId>(
@@ -55,7 +54,6 @@ export function ModelSettings() {
   const [newKeyProvider, setNewKeyProvider] = useState("");
   const [newKeyName, setNewKeyName] = useState("");
   const [newKeyValue, setNewKeyValue] = useState("");
-  const [showKeyValues, setShowKeyValues] = useState<Record<string, boolean>>({});
 
   // Update local state when data loads
   useEffect(() => {
@@ -127,12 +125,6 @@ export function ModelSettings() {
     }
   };
 
-  const toggleKeyVisibility = (keyId: string) => {
-    setShowKeyValues(prev => ({
-      ...prev,
-      [keyId]: !prev[keyId]
-    }));
-  };
 
   const selectedModelInfo = models[selectedModel as keyof typeof models];
   const supportsParameters = selectedModelInfo?.features?.includes("parameters");

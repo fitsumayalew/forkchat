@@ -23,6 +23,9 @@ export function ModelSelector() {
   const [compactMode, setCompactMode] = useState(false)
   const [collapsedProviders, setCollapsedProviders] = useState<Set<string>>(new Set())
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const toggleButtonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [openUpwards, setOpenUpwards] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
   // Fetch user configuration from Convex
@@ -81,6 +84,34 @@ export function ModelSelector() {
       // Focus search input when dropdown opens
       setTimeout(() => searchInputRef.current?.focus(), 50)
     }
+  }, [isOpen])
+
+  // Determine if dropdown should open upwards to avoid viewport overflow
+  useEffect(() => {
+    if (!isOpen) return
+
+    function calculateDirection() {
+      const buttonRect = toggleButtonRef.current?.getBoundingClientRect()
+      const menuHeight = menuRef.current?.offsetHeight || 0
+      if (!buttonRect) return setOpenUpwards(false)
+
+      const spaceBelow = window.innerHeight - buttonRect.bottom
+      const spaceAbove = buttonRect.top
+
+      // Open upwards if not enough space below but enough space above
+      if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
+        setOpenUpwards(true)
+      } else {
+        setOpenUpwards(false)
+      }
+    }
+
+    // Calculate initially
+    calculateDirection()
+
+    // Recalculate on resize while open
+    window.addEventListener('resize', calculateDirection)
+    return () => window.removeEventListener('resize', calculateDirection)
   }, [isOpen])
 
   const filteredModels = useMemo(() => {
@@ -386,6 +417,7 @@ export function ModelSelector() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        ref={toggleButtonRef}
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-2 bg-background dark:bg-background border border-border dark:border-border rounded-lg hover:bg-muted dark:hover:bg-muted transition-colors text-sm"
       >
@@ -412,7 +444,10 @@ export function ModelSelector() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full sm:w-[520px] bg-background dark:bg-background border border-border dark:border-border rounded-lg shadow-lg z-50 flex flex-col max-h-[600px]">
+        <div
+          ref={menuRef}
+          className={`absolute left-0 w-full sm:w-[520px] bg-background dark:bg-background border border-border dark:border-border rounded-lg shadow-lg z-50 flex flex-col max-h-[600px] ${openUpwards ? 'bottom-full mb-2' : 'top-full mt-2'}`}
+        >
           {/* Header with search and filters */}
           <div className="p-3 sm:p-4 border-b border-border dark:border-border flex-shrink-0">
             {/* Search Input */}

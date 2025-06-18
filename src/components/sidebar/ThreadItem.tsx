@@ -72,7 +72,7 @@ export function ThreadItem({
   const updateThread = useConvexMutation(api.threads.mutations.update)
   const deleteThread = useConvexMutation(api.threads.mutations.remove)
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = () => {
     // Don't navigate if we're editing, dragging, or clicking on action buttons
     if (isEditing || isDragging) return
     

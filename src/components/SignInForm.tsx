@@ -33,7 +33,7 @@ export function SignInForm({
             </svg>
             Sign in Using Google
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             type="button"
             className="w-full"
@@ -51,7 +51,7 @@ export function SignInForm({
               />
             </svg>
             Sign in using Github
-          </Button>
+          </Button> */}
         </div>
       </form>
       <div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">

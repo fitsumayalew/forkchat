@@ -147,12 +147,12 @@ export function ThemeSettings() {
           throw new Error("Invalid theme file structure");
         }
         
-        const savedTheme = saveCustomTheme({
-          name: themeData.name,
-          description: themeData.description || "Imported theme",
-          light: themeData.light,
-          dark: themeData.dark,
-        });
+        // const savedTheme = saveCustomTheme({
+        //   name: themeData.name,
+        //   description: themeData.description || "Imported theme",
+        //   light: themeData.light,
+        //   dark: themeData.dark,
+        // });
         
         refreshCustomThemes();
         toast.success(`Theme "${themeData.name}" imported successfully!`);

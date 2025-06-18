@@ -35,10 +35,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-// Helper function to generate Redis keys
-function getStreamKey(messageId: string) {
-  return `stream:${messageId}`;
-}
+// // Helper function to generate Redis keys
+// function getStreamKey(messageId: string) {
+//   return `stream:${messageId}`;
+// }
 
 function getStreamPartKey(messageId: string, partIndex: number) {
   return `stream:${messageId}:part:${partIndex}`;
@@ -306,7 +306,7 @@ http.route({
 http.route({
   path: "/chat/resume",
   method: "POST",
-  handler: httpAction(async (ctx, request) => {
+  handler: httpAction(async (_ctx, request) => {
     try {
       const {
         responseMessageId,

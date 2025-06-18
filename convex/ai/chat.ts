@@ -17,7 +17,7 @@ type AsyncIterableStream<T> = AsyncIterable<T> & ReadableStream<T>;
 /**
  * Builds a personalized system prompt based on user configuration and customization
  */
-function buildSystemPrompt(userConfig: any, userCustomization: any): string {
+function buildSystemPrompt(_userConfig: any, userCustomization: any): string {
   let systemPrompt = `You are an AI assistant called ForkChat.
 You are a helpful assistant that can help with a wide range of tasks.
 Be very friendly and engaging.
