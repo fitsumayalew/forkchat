@@ -1,19 +1,16 @@
+import { createFileRoute } from '@tanstack/react-router'
 import { SiteHeader } from '@/components/sidebar/SiteHeader'
 import { AppSidebar } from '@/components/sidebar/AppSidebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { ChatInterface } from '@/components/chat/ChatInterface'
-import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/_auth/')({
-  component: RouteComponent,
+export const Route = createFileRoute('/_auth/chat/$threadId')({
+  component: ChatPage,
 })
 
-function RouteComponent() {
-  return <Page />
-}
+function ChatPage() {
+  const { threadId } = Route.useParams()
 
-
- function Page() {
   return (
     <SidebarProvider
       style={
@@ -24,15 +21,10 @@ function RouteComponent() {
       }
     >
       <AppSidebar variant='inset' />
-      <SidebarInset>
-      <SiteHeader />
-
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <ChatInterface />
-          </div>
-        </div>
+      <SidebarInset className="flex flex-col h-screen overflow-hidden">
+        <SiteHeader />
+        <ChatInterface threadId={threadId} />
       </SidebarInset>
     </SidebarProvider>
   )
-}
+} 

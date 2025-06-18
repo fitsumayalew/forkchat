@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useTheme } from "@/components/ThemeProvider"
+import { ModelSelector } from "@/components/chat/ModelSelector"
 import * as React from "react"
 
 function SunIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -30,24 +30,22 @@ export function SiteHeader() {
   }, [theme]);
   const isDark = resolvedTheme === "dark";
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator
-          orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4"
-        />
-        <h1 className="text-base font-medium">Documents</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Toggle theme"
-            onClick={() => setTheme(isDark ? "light" : "dark")}
-          >
-            {isDark ? <SunIcon className="size-5" /> : <MoonIcon className="size-5" />}
-          </Button>
-        </div>
+    <header className="sticky top-0 z-50 shrink-0 flex h-(--header-height) items-center justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-border/40 dark:border-border/40 shadow-sm">
+      <div className="flex items-center gap-3 px-4 lg:px-6">
+        <SidebarTrigger className="hover:bg-muted dark:hover:bg-muted" />
+        <ModelSelector />
+      </div>
+      
+      <div className="flex items-center px-4 lg:px-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Toggle theme"
+          onClick={() => setTheme(isDark ? "light" : "dark")}
+          className="hover:bg-muted dark:hover:bg-muted"
+        >
+          {isDark ? <SunIcon className="size-5" /> : <MoonIcon className="size-5" />}
+        </Button>
       </div>
     </header>
   )

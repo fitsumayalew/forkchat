@@ -5,7 +5,7 @@ import { authTables } from "@convex-dev/auth/server";
 
 
 // Schema for individual parts of a message, supporting different content types.
-const partSchema = v.union(
+export const partSchema = v.union(
   v.object({ type: v.literal("text"), text: v.string() }),
   v.object({ type: v.literal("reasoning"), reasoning: v.string() }),
   v.object({
@@ -23,7 +23,7 @@ const partSchema = v.union(
 );
 
 // / Schema for the status of a message.
-const messageStatus = v.union(
+export const messageStatus = v.union(
   v.literal("waiting"),
   v.literal("thinking"),
   v.literal("streaming"),
@@ -52,11 +52,22 @@ const modelParametersSchema = v.object({
 // The schema provides more precise TypeScript types.
 export default defineSchema({
   ...authTables,
+
+  // Table to store folders.
+  folders: defineTable({
+    name: v.string(),
+    // Optional: for nested folders in the future
+    parentId: v.optional(v.id("folders")),
+    // Optional: for custom ordering
+    order: v.optional(v.number()),
+    userId: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"]),
   // Table to store conversation threads.
   threads: defineTable({
     threadId: v.string(),
     title: v.string(),
-    createdAt: v.number(),
     updatedAt: v.number(),
     lastMessageAt: v.number(),
     generationStatus: v.union(
@@ -68,6 +79,7 @@ export default defineSchema({
     visibility: v.union(v.literal("visible"), v.literal("archived")),
     userSetTitle: v.optional(v.boolean()),
     userId: v.string(),
+    folderId: v.optional(v.id("folders")),
     model: v.string(),
     pinned: v.boolean(),
     branchParentThreadId: v.optional(v.id("threads")),
@@ -89,7 +101,6 @@ export default defineSchema({
     threadId: v.string(),
     userId: v.string(),
     reasoning: v.optional(v.string()),
-    content: v.string(),
     parts: v.optional(v.array(partSchema)),
     status: messageStatus,
     updated_at: v.optional(v.number()),
@@ -119,19 +130,21 @@ export default defineSchema({
 
   // Table to store file attachments.
   attachments: defineTable({
-    publicMessageIds: v.array(v.id("messages")),
     userId: v.string(),
-    attachmentType: v.string(),
-    attachmentUrl: v.string(),
+    // The original name of the file as it was on the user's computer.
     fileName: v.string(),
+    // The MIME type of the file (e.g., 'image/png', 'application/pdf').
     mimeType: v.string(),
+    // The type of attachment (e.g., 'image', 'file', 'text').
+    attachmentType: v.string(),
+    // The size of the file in bytes.
     fileSize: v.number(),
-    fileKey: v.string(),
+    storageId: v.id("_storage"), // Convex storage file ID
+    publicMessageIds: v.optional(v.array(v.id("messages"))), // Messages that reference this attachment
     status: v.optional(v.union(v.literal("deleted"), v.literal("uploaded"))),
   })
-    .index("by_fileKey", ["fileKey"])
     .index("by_userId", ["userId"])
-    .index("by_userId_and_fileKey", ["userId", "fileKey"]),
+    .index("by_storageId", ["storageId"]),
 
   // Table for user-specific configuration and settings.
   userConfiguration: defineTable({

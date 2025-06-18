@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "katex/dist/katex.min.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -111,10 +113,393 @@
 }
 
 @layer base {
+  /* Ensure no page-level scrollbars */
+  html {
+    height: 100%;
+    overflow: hidden;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  
+  #root {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
+}
+
+/* Enhanced Markdown Typography */
+@layer utilities {
+  .prose {
+    /* Better font rendering */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Improved heading spacing and typography */
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    margin-top: 1.5em;
+    margin-bottom: 0.4em;
+    scroll-margin-top: 4rem;
+  }
+  
+  .prose h1:first-child,
+  .prose h2:first-child,
+  .prose h3:first-child,
+  .prose h4:first-child,
+  .prose h5:first-child,
+  .prose h6:first-child {
+    margin-top: 0;
+  }
+  
+  /* Enhanced link styling with better focus states */
+  .prose a {
+    transition: all 0.2s ease;
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.25rem;
+    margin: -0.125rem -0.25rem;
+  }
+  
+  .prose a:focus {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  
+  /* Better paragraph spacing */
+  .prose p {
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+    line-height: 1.25;
+  }
+  
+  /* Enhanced list styling */
+  .prose ul,
+  .prose ol {
+    margin-top: 0.75em;
+    margin-bottom: 0.75em;
+  }
+  
+  .prose li {
+    margin-top: 0.25em;
+    margin-bottom: 0.25em;
+    line-height: 1.25;
+  }
+  
+  /* Improved table styling */
+  .prose table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .prose th {
+    background-color: rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+  }
+  
+  .dark .prose th {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .prose td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .prose td {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* KaTeX Overrides inside markdown prose */
+  .prose .katex {
+    /* Reset any typography/line-height overrides */
+    line-height: 1; 
+    font-size: 1em;
+  }
+  /* Block math spacing (display math) */
+  .prose .katex-display {
+    margin: 0.5em 0;
+  }
+}
+
+/* Shiki Code Block Enhancements */
+@layer utilities {
+  /* Override Shiki's default styles to integrate with our design */
+  .shiki-code-block pre {
+    margin: 0 !important;
+    padding: 0.5rem !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'Liberation Mono', 'Courier New', monospace !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.25 !important;
+    overflow: visible !important;
+    color: inherit !important;
+  }
+  
+  .shiki-code-block code {
+    background: transparent !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    color: inherit !important;
+  }
+  
+  /* Line numbers styling */
+  .shiki-code-block.line-numbers-enabled .line {
+    display: flex;
+    align-items: flex-start;
+  }
+  
+  .shiki-code-block .line-number {
+    display: inline-block;
+    margin-right: 1rem;
+    text-align: right;
+    opacity: 0.4;
+    user-select: none;
+    border-right: 1px solid rgba(128, 128, 128, 0.2);
+    padding-right: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8em;
+    min-width: 2.5em;
+  }
+  
+  /* Enhanced diff highlighting */
+  .shiki-code-block .line[data-line*="+"] {
+    background-color: rgba(63, 185, 80, 0.15);
+    border-left: 3px solid rgba(63, 185, 80, 0.6);
+    padding-left: 0.5rem;
+    margin-left: -0.5rem;
+  }
+  
+  .shiki-code-block .line[data-line*="-"] {
+    background-color: rgba(248, 81, 73, 0.15);
+    border-left: 3px solid rgba(248, 81, 73, 0.6);
+    padding-left: 0.5rem;
+    margin-left: -0.5rem;
+  }
+  
+  /* Ensure proper scrolling for long code lines */
+  .shiki-code-block {
+    white-space: pre;
+    word-wrap: normal;
+    overflow-x: auto;
+    position: relative;
+  }
+  
+  /* Custom scrollbar for code blocks */
+  .shiki-code-block::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+  }
+  
+  .shiki-code-block::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  
+  .shiki-code-block::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+  
+  .shiki-code-block::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  
+  .dark .shiki-code-block::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .dark .shiki-code-block::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .dark .shiki-code-block::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* Mermaid Diagram Styling */
+@layer utilities {
+  /* Mermaid diagrams responsive sizing */
+  .mermaid {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Mermaid theme integration */
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+    background: transparent;
+  }
+}
+
+/* Enhanced Table Styling */
+@layer utilities {
+  /* Improved table accessibility */
+  .enhanced-table th[role="columnheader"] {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .enhanced-table th[role="columnheader"]:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .dark .enhanced-table th[role="columnheader"]:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .enhanced-table th[role="columnheader"]:focus {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+  }
+  
+  /* Better row highlighting */
+  .enhanced-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+  
+  .dark .enhanced-table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+}
+
+/* Callout/Admonition Enhancements */
+@layer utilities {
+  /* Smooth animations for callouts */
+  .callout {
+    transition: all 0.2s ease;
+  }
+  
+  .callout:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .dark .callout:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Improved focus states for interactive elements */
+  .callout:focus-within {
+    ring: 2px;
+    ring-color: var(--ring);
+    ring-offset: 2px;
+  }
+}
+
+/* Enhanced Accessibility */
+@layer utilities {
+  /* Better focus indicators */
+  .focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .prose {
+      --tw-prose-body: black;
+      --tw-prose-headings: black;
+      --tw-prose-links: blue;
+      --tw-prose-bold: black;
+      --tw-prose-counters: black;
+      --tw-prose-bullets: black;
+      --tw-prose-hr: black;
+      --tw-prose-quotes: black;
+      --tw-prose-quote-borders: black;
+      --tw-prose-captions: black;
+      --tw-prose-code: black;
+      --tw-prose-pre-code: white;
+      --tw-prose-pre-bg: black;
+      --tw-prose-th-borders: black;
+      --tw-prose-td-borders: black;
+    }
+    
+    .dark .prose {
+      --tw-prose-body: white;
+      --tw-prose-headings: white;
+      --tw-prose-links: #66d9ff;
+      --tw-prose-bold: white;
+      --tw-prose-counters: white;
+      --tw-prose-bullets: white;
+      --tw-prose-hr: white;
+      --tw-prose-quotes: white;
+      --tw-prose-quote-borders: white;
+      --tw-prose-captions: white;
+      --tw-prose-code: white;
+      --tw-prose-pre-code: black;
+      --tw-prose-pre-bg: white;
+      --tw-prose-th-borders: white;
+      --tw-prose-td-borders: white;
+    }
+  }
+}
+
+/* Print Styles */
+@layer utilities {
+  @media print {
+    .shiki-code-block,
+    .prose {
+      color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    .prose a {
+      text-decoration: underline;
+    }
+    
+    .prose a[href^="http"]:after {
+      content: " (" attr(href) ")";
+      font-size: 0.8em;
+      color: #666;
+    }
+    
+    .callout {
+      border: 1px solid #ccc;
+      break-inside: avoid;
+    }
+    
+    .shiki-code-block {
+      border: 1px solid #ccc;
+      break-inside: avoid;
+    }
   }
 }
