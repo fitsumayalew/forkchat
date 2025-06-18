@@ -1,6 +1,8 @@
 import { query } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { paginationOptsValidator } from "convex/server";
+import { v } from "convex/values";
+import { internalQuery } from "../_generated/server";
 
 /**
  * account.getUserConfiguration
@@ -11,14 +13,58 @@ import { paginationOptsValidator } from "convex/server";
  * authenticated or no configuration has been stored yet, `null` is returned.
  */
 export const getUserConfiguration = query({
+  args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) return null;
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
 
-    return await ctx.db
+    const config = await ctx.db
       .query("userConfiguration")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
+      .first();
+
+    return config || {
+      userId,
+      currentlySelectedModel: "gpt-4o-mini", // Default model
+      theme: "system",
+      preferOwnApiKeys: false,
+      favoriteModels: [],
+      currentModelParameters: {
+        temperature: 0.7,
+        topP: 0.9,
+        includeSearch: false,
+      },
+    };
+  },
+});
+
+/**
+ * account.getUserConfigurationInternal
+ *
+ * Internal version of getUserConfiguration that accepts a userId parameter
+ */
+export const getUserConfigurationInternal = internalQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, { userId }) => {
+    const config = await ctx.db
+      .query("userConfiguration")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+
+    return config || {
+      userId,
+      currentlySelectedModel: "gpt-4o-mini", // Default model
+      theme: "system", 
+      preferOwnApiKeys: false,
+      favoriteModels: [],
+      currentModelParameters: {
+        temperature: 0.7,
+        topP: 0.9,
+        includeSearch: false,
+      },
+    };
   },
 });
 
@@ -33,6 +79,21 @@ export const getUserPromptCustomization = query({
     if (!userId) return null;
 
     // Fetch prompt customization for this user.
+    return await ctx.db
+      .query("userPromptCustomization")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .unique();
+  },
+});
+
+/**
+ * account.getUserPromptCustomizationInternal
+ *
+ * Internal version of getUserPromptCustomization that accepts a userId parameter
+ */
+export const getUserPromptCustomizationInternal = internalQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, { userId }) => {
     return await ctx.db
       .query("userPromptCustomization")
       .withIndex("by_userId", (q) => q.eq("userId", userId))

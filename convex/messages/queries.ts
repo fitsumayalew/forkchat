@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalQuery, query } from "../_generated/server";
+import { query, internalQuery } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 /**
@@ -52,6 +52,29 @@ export const getPublicByThreadId = query({
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_threadId", (q) => q.eq("threadId", threadId))
+      .order("desc")
+      .collect();
+
+    return messages.reverse();
+  },
+});
+
+/**
+ * messages.getByThreadIdInternal
+ * 
+ * Internal version of getByThreadId that accepts userId as a parameter
+ */
+export const getByThreadIdInternal = internalQuery({
+  args: { 
+    threadId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, { threadId, userId }) => {
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread_and_userid", (q) => 
+        q.eq("threadId", threadId).eq("userId", userId)
+      )
       .order("desc")
       .collect();
 

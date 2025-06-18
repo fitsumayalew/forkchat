@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useTheme } from "@/components/ThemeProvider"
-import { ModelSelector } from "@/components/chat/ModelSelector"
 import { ShareDialog } from "@/components/chat/ShareDialog"
-import { Share2 } from "lucide-react"
+import { SummaryDialog } from "@/components/chat/SummaryDialog"
+import { ModelSelectorDropZone } from "@/components/chat/ModelSelectorDropZone"
+import { Share2, FileText } from "lucide-react"
 import * as React from "react"
 
 interface SiteHeaderProps {
@@ -25,6 +26,7 @@ function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
 export function SiteHeader({ threadId }: SiteHeaderProps) {
   const { theme, setTheme } = useTheme();
   const [shareDialogOpen, setShareDialogOpen] = React.useState(false);
+  const [summaryDialogOpen, setSummaryDialogOpen] = React.useState(false);
   
   // Determine the current theme (system, dark, or light)
   const [resolvedTheme, setResolvedTheme] = React.useState<"dark" | "light">("light");
@@ -33,20 +35,35 @@ export function SiteHeader({ threadId }: SiteHeaderProps) {
       const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
       setResolvedTheme(systemTheme);
     } else {
-      setResolvedTheme(theme);
+      setResolvedTheme(theme as "dark" | "light");
     }
   }, [theme]);
   const isDark = resolvedTheme === "dark";
   
   return (
     <>
-      <header className="sticky top-0 z-50 shrink-0 flex h-(--header-height) items-center justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-border/40 dark:border-border/40 shadow-sm">
-        <div className="flex items-center gap-3 px-4 lg:px-6">
-          <SidebarTrigger className="hover:bg-muted dark:hover:bg-muted" />
-          <ModelSelector />
-        </div>
+              <header className="sticky top-0 z-50 shrink-0 flex h-(--header-height) items-center justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-border/40 dark:border-border/40 shadow-sm">
+          <ModelSelectorDropZone
+            location="header"
+            className="flex items-center gap-3 px-4 lg:px-6 relative"
+          >
+            <SidebarTrigger className="hover:bg-muted dark:hover:bg-muted" />
+          </ModelSelectorDropZone>
         
         <div className="flex items-center gap-2 px-4 lg:px-6">
+          {/* Summary button - only show when we have a threadId */}
+          {threadId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Summarize conversation"
+              onClick={() => setSummaryDialogOpen(true)}
+              className="hover:bg-muted dark:hover:bg-muted"
+            >
+              <FileText className="size-5" />
+            </Button>
+          )}
+          
           {/* Share button - only show when we have a threadId */}
           {threadId && (
             <Button
@@ -71,6 +88,15 @@ export function SiteHeader({ threadId }: SiteHeaderProps) {
           </Button>
         </div>
       </header>
+
+      {/* Summary Dialog */}
+      {threadId && (
+        <SummaryDialog
+          isOpen={summaryDialogOpen}
+          onOpenChange={setSummaryDialogOpen}
+          threadId={threadId}
+        />
+      )}
 
       {/* Share Dialog */}
       {threadId && (

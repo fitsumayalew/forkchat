@@ -12,8 +12,21 @@ interface CodeBlockProps {
   theme?: 'light' | 'dark' | 'auto'
 }
 
-// Cache for highlighted code to improve performance
+// Cache for highlighted code to improve performance with size limit
 const highlightCache = new Map<string, string>()
+const MAX_CACHE_SIZE = 100
+
+// Helper to manage cache size
+const addToCache = (key: string, value: string) => {
+  if (highlightCache.size >= MAX_CACHE_SIZE) {
+    // Remove the first (oldest) entry
+    const firstKey = highlightCache.keys().next().value
+    if (firstKey) {
+      highlightCache.delete(firstKey)
+    }
+  }
+  highlightCache.set(key, value)
+}
 
 // Helper to detect if code is a diff
 const isDiffContent = (code: string, language: string): boolean => {
@@ -96,9 +109,16 @@ export function CodeBlock({
   const isDiffCode = useMemo(() => forceDiff || isDiffContent(code, language), [code, language, forceDiff])
   const effectiveLanguage = isDiffCode ? 'diff' : normalizedLanguage
 
-  // Create cache key
+  // Create cache key - use a hash of the full content for better performance and accuracy
   const cacheKey = useMemo(() => {
-    return `${effectiveLanguage}:${actualTheme}:${showLineNumbers}:${code.slice(0, 100)}`
+    // Simple hash function for the full code content
+    let hash = 0
+    for (let i = 0; i < code.length; i++) {
+      const char = code.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32bit integer
+    }
+    return `${effectiveLanguage}:${actualTheme}:${showLineNumbers}:${Math.abs(hash).toString(36)}`
   }, [effectiveLanguage, actualTheme, showLineNumbers, code])
 
   useEffect(() => {
@@ -153,7 +173,7 @@ export function CodeBlock({
         })
         
         // Cache the result
-        highlightCache.set(cacheKey, html)
+        addToCache(cacheKey, html)
         setHighlightedCode(html)
       } catch (error) {
         console.error('Failed to highlight code:', error)

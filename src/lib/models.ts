@@ -19,24 +19,6 @@ export const models = {
       imageGen: true,
     },
 
-    // thining
-    "gemini-2.5-flash-thinking": {
-      id: "gemini-2.5-flash-thinking",
-      name: "Gemini 2.5 Flash (Thinking)",
-      provider: "Google",
-      developer: "Google",
-  
-      shortDescription: "Google's latest fast model",
-      fullDescription: "Google's latest fast model, but now it can think!",
-  
-      disabled: false,
-  
-      limits: { maxInputTokens: 1e6, maxOutputTokens: 65535 },
-      streamChunking: "word",
-      features: ["images", "pdfs", "search", "reasoningEffort"],
-  
-      byok: "optional",
-    },
     // IMAGES PDFS AND SEARCH
     "gemini-2.0-flash": {
       id: "gemini-2.0-flash",
@@ -72,15 +54,15 @@ export const models = {
       features: ["parameters", "reasoning"],
     },
 
-    "llama-4-maverick": {
-      id: "llama-4-maverick",
-      name: "Llama 4 Maverick",
+    "gpt-4o-mini": {
+      id: "gpt-4o-mini",
+      name: "GPT 4o Mini",
       provider: "OpenRouter",
-      developer: "Meta",
+      developer: "OpenAI",
   
-      shortDescription: "Latest OSS model from Meta",
+      shortDescription: "OpenAI's latest and greatest model",
       fullDescription:
-        "Llama 4 Maverick 17B Instruct (128E) is a high-capacity multimodal language model from Meta, built on a mixture-of-experts (MoE) architecture with 128 experts and 17 billion active parameters per forward pass (400B total). It supports multilingual text and image input, and produces multilingual text and code output across 12 supported languages. Optimized for vision-language tasks, Maverick is instruction-tuned for assistant-like behavior, image reasoning, and general-purpose multimodal interaction. Maverick features early fusion for native multimodality and a 1 million token context window. It was trained on a curated mixture of public, licensed, and Meta-platform data, covering ~22 trillion tokens, with a knowledge cutoff in August 2024. Released on April 5, 2025 under the Llama 4 Community License, Maverick is suited for research and commercial applications requiring advanced multimodal understanding and high model throughput.",
+        "GPT 4o Mini is OpenAI's latest and greatest model. It's a high-capacity multimodal language model, built on a mixture-of-experts (MoE) architecture with 128 experts and 17 billion active parameters per forward pass (400B total). It supports multilingual text and image input, and produces multilingual text and code output across 12 supported languages. Optimized for vision-language tasks, Maverick is instruction-tuned for assistant-like behavior, image reasoning, and general-purpose multimodal interaction. Maverick features early fusion for native multimodality and a 1 million token context window. It was trained on a curated mixture of public, licensed, and Meta-platform data, covering ~22 trillion tokens, with a knowledge cutoff in August 2024. Released on April 5, 2025 under the Llama 4 Community License, Maverick is suited for research and commercial applications requiring advanced multimodal understanding and high model throughput.",
   
       disabled: false,
   

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { internalMutation, mutation } from "../_generated/server";
+import { internalMutation, mutation, action } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "../_generated/api";
 
 /**
  * threads.update
@@ -287,6 +288,44 @@ export const copySharedThread = mutation({
       success: true,
       newThreadId,
       message: "Chat copied successfully!"
+    };
+  },
+});
+
+/**
+ * threads.generateSummary
+ * 
+ * Purpose: Generates a comprehensive summary of a chat thread using AI.
+ * How it's used: Called when user clicks the summary button to get an overview of the conversation.
+ */
+export const generateSummary = action({
+  args: { threadId: v.string() },
+  handler: async (ctx, { threadId }): Promise<{
+    success: boolean;
+    summary: string;
+    threadTitle: string;
+    messageCount: number;
+  }> => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Get the chat data for summarization
+    const chatData = await ctx.runQuery(internal.threads.queries.summarizeChat, { threadId, userId });
+    
+    if (!chatData || !chatData.messages.length) {
+      throw new Error("No messages found in this thread or access denied");
+    }
+
+    // Generate the summary using AI
+    const summary: string = await ctx.runAction(internal.ai.chat.generateChatSummary, {
+      messages: chatData.messages
+    });
+
+    return {
+      success: true,
+      summary,
+      threadTitle: chatData.thread.title,
+      messageCount: chatData.messages.length
     };
   },
 });

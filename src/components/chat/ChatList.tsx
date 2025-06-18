@@ -90,7 +90,7 @@ export function ChatList({ messages, onCopy, onBranch, onRetry, onEdit, onEditSa
   return (
     <div className="relative h-full">
       <ScrollArea ref={scrollAreaRef} className="h-full">
-        <div className="p-4 space-y-4">
+        <div className="p-4 pb-12 space-y-4">
           {messages.map((message) => (
             <MarkdownContent
               key={message.messageId}

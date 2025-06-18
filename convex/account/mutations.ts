@@ -54,29 +54,43 @@ export const claimThreadsOnLogin = mutation({
  */
 export const updateUserConfiguration = mutation({
   args: {
-    configuration: v.object({
-      theme: v.optional(v.string()),
-      currentlySelectedModel: v.optional(v.string()),
-      currentModelParameters: v.optional(v.any()),
-      favoriteModels: v.optional(v.array(v.string())),
-      preferOwnApiKeys: v.optional(v.boolean()),
-    }),
+    currentlySelectedModel: v.optional(v.string()),
+    theme: v.optional(v.string()),
+    preferOwnApiKeys: v.optional(v.boolean()),
+    favoriteModels: v.optional(v.array(v.string())),
+    currentModelParameters: v.optional(v.object({
+      temperature: v.optional(v.number()),
+      topP: v.optional(v.number()),
+      topK: v.optional(v.number()),
+      reasoningEffort: v.optional(
+        v.union(v.literal("low"), v.literal("medium"), v.literal("high"))
+      ),
+      includeSearch: v.optional(v.boolean()),
+    })),
   },
-  handler: async (ctx, { configuration }) => {
+  handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) throw new Error("Not authenticated");
+    if (!userId) {
+      throw new Error("Not authenticated");
+    }
 
-    const existing = await ctx.db
+    // Check if user configuration already exists
+    const existingConfig = await ctx.db
       .query("userConfiguration")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
-      .unique();
+      .first();
 
-    if (existing) {
-      await ctx.db.patch(existing._id, { ...configuration });
+    if (existingConfig) {
+      // Update existing configuration
+      await ctx.db.patch(existingConfig._id, {
+        ...args,
+      });
+      return existingConfig._id;
     } else {
-      await ctx.db.insert("userConfiguration", {
+      // Create new configuration
+      return await ctx.db.insert("userConfiguration", {
         userId,
-        ...configuration,
+        ...args,
       });
     }
   },

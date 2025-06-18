@@ -1,8 +1,9 @@
-import { useState, useRef, KeyboardEvent } from 'react'
+import { useState, useRef, KeyboardEvent, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { useConvexMutation } from '@convex-dev/react-query'
+import { useConvexMutation, useConvexQuery, useConvexAction } from '@convex-dev/react-query'
 import TextareaAutosize from 'react-textarea-autosize'
 import { AttachmentTray } from './AttachmentTray'
+import { ModelSelectorDropZone } from './ModelSelectorDropZone'
 import { api } from '../../../convex/_generated/api'
 import { Id } from '../../../convex/_generated/dataModel'
 
@@ -26,7 +27,7 @@ export function MessageInput({ threadId }: MessageInputProps) {
   const [message, setMessage] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
-  const [searchEnabled, setSearchEnabled] = useState(false)
+  const [isRefining, setIsRefining] = useState(false)
   const [reasoningEffort, setReasoningEffort] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -34,6 +35,22 @@ export function MessageInput({ threadId }: MessageInputProps) {
   const addMessagesToThread = useConvexMutation(api.messages.mutations.addMessagesToThread)
   const generateUploadUrl = useConvexMutation(api.attachments.mutations.generateUploadUrl)
   const uploadFile = useConvexMutation(api.attachments.mutations.uploadFile)
+  const refineUserPrompt = useConvexAction(api.ai.chat.refineUserPrompt)
+  
+  // Fetch user configuration to get preferred model and settings
+  const userConfig = useConvexQuery(api.account.queries.getUserConfiguration, {})
+  
+  // Initialize search enabled state with user's default preference
+  const [searchEnabled, setSearchEnabled] = useState(
+    userConfig?.currentModelParameters?.includeSearch || false
+  )
+
+  // Update searchEnabled when userConfig changes
+  useEffect(() => {
+    if (userConfig?.currentModelParameters?.includeSearch !== undefined) {
+      setSearchEnabled(userConfig.currentModelParameters.includeSearch)
+    }
+  }, [userConfig?.currentModelParameters?.includeSearch])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -126,13 +143,16 @@ export function MessageInput({ threadId }: MessageInputProps) {
         .filter(att => att.uploaded && att.attachmentId)
         .map(att => att.attachmentId!)
 
+      // Get user's preferred model from configuration
+      const selectedModel = userConfig?.currentlySelectedModel || 'gpt-4o-mini'
+
       // Prepare the user message
       const userMessage = {
         content: message.trim(),
-        model: 'gpt-4o-mini', // TODO: Get from user preferences
+        model: selectedModel,
         attachmentIds,
         modelParams: {
-          temperature: 0.7,
+          temperature: userConfig?.currentModelParameters?.temperature || 0.7,
           includeSearch: searchEnabled,
           reasoningEffort: reasoningEffort ? ('medium' as const) : undefined,
         },
@@ -165,6 +185,26 @@ export function MessageInput({ threadId }: MessageInputProps) {
     setIsGenerating(false)
     // TODO: Implement stop logic
     console.log('Stopping generation')
+  }
+
+  const handleRefinePrompt = async () => {
+    if (!message.trim()) return
+    
+    setIsRefining(true)
+    try {
+      const result = await refineUserPrompt({ 
+        prompt: message.trim(),
+        threadId: threadId, // Pass the current thread ID for context
+      })
+      if (result.success) {
+        setMessage(result.refinedPrompt)
+      }
+    } catch (error) {
+      console.error('Failed to refine prompt:', error)
+      // TODO: Show error toast
+    } finally {
+      setIsRefining(false)
+    }
   }
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,6 +313,12 @@ export function MessageInput({ threadId }: MessageInputProps) {
         {/* Action Bar */}
         <div className="flex items-center justify-between px-4 py-2 border-t border-border dark:border-border">
           <div className="flex items-center space-x-2">
+            {/* Model Selector Drop Zone */}
+            <ModelSelectorDropZone
+              location="input"
+              className="relative"
+            />
+            
             {/* Contextual Toggles */}
             <div className="flex items-center space-x-1">
               {/* Search Toggle */}
@@ -318,29 +364,53 @@ export function MessageInput({ threadId }: MessageInputProps) {
             </div>
           </div>
 
-          {/* Send/Stop Button */}
-          <button
-            onClick={isGenerating ? handleStop : handleSend}
-            disabled={!canSend && !isGenerating}
-            className={`p-2 rounded-full transition-all ${
-              isGenerating
-                ? 'bg-red-500 hover:bg-red-600 text-white'
-                : canSend
-                ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                : 'bg-muted text-muted-foreground cursor-not-allowed'
-            }`}
-            title={isGenerating ? 'Stop Generation' : 'Send Message'}
-          >
-            {isGenerating ? (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <rect x="6" y="6" width="12" height="12" rx="1" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-            )}
-          </button>
+          <div className="flex items-center space-x-2">
+            {/* Refine Prompt Button */}
+            <button
+              onClick={handleRefinePrompt}
+              disabled={!message.trim() || isRefining || isGenerating}
+              className={`p-2 rounded-lg transition-all ${
+                isRefining
+                  ? 'text-purple-400 cursor-not-allowed shadow-lg shadow-purple-500/50 animate-pulse'
+                  : message.trim() && !isGenerating
+                  ? 'text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20'
+                  : 'text-muted-foreground cursor-not-allowed'
+              }`}
+              title="Refine Prompt"
+            >
+              {isRefining ? (
+                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ) : (
+                <span className="text-base">✨</span>
+              )}
+            </button>
+
+            {/* Send/Stop Button */}
+            <button
+              onClick={isGenerating ? handleStop : handleSend}
+              disabled={!canSend && !isGenerating}
+              className={`p-2 rounded-full transition-all ${
+                isGenerating
+                  ? 'bg-red-500 hover:bg-red-600 text-white'
+                  : canSend
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+              title={isGenerating ? 'Stop Generation' : 'Send Message'}
+            >
+              {isGenerating ? (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <rect x="6" y="6" width="12" height="12" rx="1" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

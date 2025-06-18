@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query } from "../_generated/server";
+import { query, internalQuery } from "../_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 /**
@@ -124,6 +124,43 @@ export const getPublicThread = query({
         image: (sharer as any).image || "",
         email: (sharer as any).email || "",
       } : null
+    };
+  },
+});
+
+/**
+ * threads.summarizeChat
+ * 
+ * Purpose: Summarizes all messages in a chat thread using Gemini 2.0 Flash.
+ * How it's used: Called when user clicks the summary button to get an overview of the entire conversation.
+ */
+export const summarizeChat = internalQuery({
+  args: { threadId: v.string(), userId: v.id("users") },
+  handler: async (ctx, { threadId, userId }) => {
+    // First check if the thread belongs to the user
+    const thread = await ctx.db
+      .query("threads")
+      .withIndex("by_user_and_threadId", (q) => 
+        q.eq("userId", userId).eq("threadId", threadId)
+      )
+      .filter((q) => q.eq(q.field("visibility"), "visible"))
+      .unique();
+
+    if (!thread) return null;
+
+    // Get all messages for the thread
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread_and_userid", (q) => 
+        q.eq("threadId", threadId).eq("userId", userId)
+      )
+      .order("desc")
+      .collect();
+
+    // Return the messages in chronological order for summary generation
+    return {
+      thread,
+      messages: messages.reverse()
     };
   },
 });

@@ -80,15 +80,13 @@ export function ModelSettings() {
     setIsLoading(true);
     try {
       await updateUserConfig({
-        configuration: {
-          currentlySelectedModel: selectedModel,
-          favoriteModels,
-          currentModelParameters: {
-            temperature,
-            topP,
-          },
-          preferOwnApiKeys,
+        currentlySelectedModel: selectedModel,
+        favoriteModels,
+        currentModelParameters: {
+          temperature,
+          topP,
         },
+        preferOwnApiKeys,
       });
       toast.success("Model settings saved successfully");
     } catch (error) {

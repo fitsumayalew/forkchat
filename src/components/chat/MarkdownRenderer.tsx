@@ -258,6 +258,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
             language={language}
             code={code}
             showLineNumbers={code.split('\n').length > 1}
+            key={`${language}-${code.length}-${hashString(code)}`}
           />
         )
       }

@@ -7,12 +7,12 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 type ModelId = keyof typeof models
 
 const CAPABILITY_FILTERS = [
-  { key: 'fast', label: 'Fast', icon: '⚡' },
-  { key: 'images', label: 'Vision', icon: '🖼️' },
-  { key: 'search', label: 'Search', icon: '🔍' },
-  { key: 'pdfs', label: 'PDFs', icon: '📄' },
-  { key: 'reasoning', label: 'Reasoning', icon: '🧠' },
-  { key: 'imageGeneration', label: 'Image Gen', icon: '🎨' },
+  { key: 'fast', label: 'Fast', icon: 'F' },
+  { key: 'images', label: 'Vision', icon: 'V' },
+  { key: 'search', label: 'Search', icon: 'S' },
+  { key: 'pdfs', label: 'PDFs', icon: 'P' },
+  { key: 'reasoning', label: 'Reasoning', icon: 'R' },
+  { key: 'imageGeneration', label: 'Image Gen', icon: 'I' },
 ] as const
 
 export function ModelSelector() {
@@ -20,7 +20,7 @@ export function ModelSelector() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set())
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
-  const [compactMode, setCompactMode] = useState(true)
+  const [compactMode, setCompactMode] = useState(false)
   const [collapsedProviders, setCollapsedProviders] = useState<Set<string>>(new Set())
   const dropdownRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -70,9 +70,7 @@ export function ModelSelector() {
       const validModelId = Object.entries(models).find(([, model]) => model === safeSelectedModelData)?.[0]
       if (validModelId) {
         updateUserConfig({
-          configuration: {
-            currentlySelectedModel: validModelId
-          }
+          currentlySelectedModel: validModelId
         })
       }
     }
@@ -153,14 +151,14 @@ export function ModelSelector() {
 
   const getProviderIcon = (provider: string) => {
     switch (provider) {
-      case 'Anthropic': return '🤖'
-      case 'OpenAI': return '🟢'
-      case 'Azure': return '☁️'
-      case 'Google': return '🔵'
-      case 'Groq': return '⚡'
-      case 'Fireworks.ai': return '🔥'
-      case 'OpenRouter': return '🔀'
-      default: return '⚙️'
+      case 'Anthropic': return 'AN'
+      case 'OpenAI': return 'OA'
+      case 'Azure': return 'AZ'
+      case 'Google': return 'GO'
+      case 'Groq': return 'GQ'
+      case 'Fireworks.ai': return 'FW'
+      case 'OpenRouter': return 'OR'
+      default: return 'XX'
     }
   }
 
@@ -197,17 +195,13 @@ export function ModelSelector() {
       : [...favoriteModels, modelId]
     
     await updateUserConfig({
-      configuration: {
-        favoriteModels: newFavorites
-      }
+      favoriteModels: newFavorites
     })
   }
 
   const selectModel = async (modelId: string) => {
     await updateUserConfig({
-      configuration: {
-        currentlySelectedModel: modelId
-      }
+      currentlySelectedModel: modelId
     })
     setIsOpen(false)
     setSearchQuery('')
@@ -274,7 +268,7 @@ export function ModelSelector() {
       {/* BYOK indicator */}
       {'byok' in model && model.byok === 'required' && (
         <div className="inline-flex items-center px-1 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded mb-1">
-          🔑
+          BYOK
         </div>
       )}
 
@@ -493,7 +487,9 @@ export function ModelSelector() {
                       : 'bg-muted dark:bg-muted text-muted-foreground hover:bg-accent dark:hover:bg-accent border border-transparent'
                   }`}
                 >
-                  <span className="mr-1">❤️</span>
+                  <svg className="w-3 h-3 mr-1" fill={showFavoritesOnly ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
                   Favorites
                 </button>
                 {CAPABILITY_FILTERS.map((filter) => (
@@ -542,7 +538,11 @@ export function ModelSelector() {
                 </div>
               ) : (
                 <div className="p-4 text-center text-muted-foreground">
-                  <div className="text-2xl mb-2">❤️</div>
+                  <div className="flex justify-center mb-2">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
                   <div className="text-sm">No favorite models yet</div>
                   <div className="text-xs mt-1">Click the heart icon on any model to add it to favorites</div>
                 </div>

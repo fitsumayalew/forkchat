@@ -10,6 +10,7 @@ import { RouterProvider, createRouter } from "@tanstack/react-router";
 import "./index.css";
 import { routeTree } from "./routeTree.gen";
 import { ThemeProvider } from "./components/ThemeProvider";
+import { ModelSelectorProvider } from "./contexts/ModelSelectorContext";
 import { convex } from "./convex";
 
 // ---------------------------------------------------------------------------
@@ -61,12 +62,14 @@ if (!rootElement.innerHTML) {
 
   root.render(
     <StrictMode>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <ConvexProvider client={convex}>
-          <ConvexAuthProvider client={convex}>
-            <App />
-          </ConvexAuthProvider>
-        </ConvexProvider>
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <ModelSelectorProvider>
+          <ConvexProvider client={convex}>
+            <ConvexAuthProvider client={convex}>
+              <App />
+            </ConvexAuthProvider>
+          </ConvexProvider>
+        </ModelSelectorProvider>
       </ThemeProvider>
     </StrictMode>
   );

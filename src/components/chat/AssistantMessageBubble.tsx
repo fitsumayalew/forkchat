@@ -31,13 +31,15 @@ interface AssistantMessageBubbleProps {
   onCopy?: (text: string) => void
   onBranch?: (messageId: string) => void
   onRetry?: (messageId: string) => void
+  readOnlyMode?: boolean
 }
 
 export function AssistantMessageBubble({ 
   message, 
   onCopy, 
   onBranch, 
-  onRetry 
+  onRetry,
+  readOnlyMode = false
 }: AssistantMessageBubbleProps) {
   const isError = message.status === 'error' || message.status === 'error.rejected'
   const isGenerating = ['waiting', 'thinking', 'streaming'].includes(message.status || '')
@@ -124,7 +126,7 @@ export function AssistantMessageBubble({
             </div>
 
             {/* Right side: action buttons - only visible on hover */}
-            {!isGenerating && (
+            {!isGenerating && !readOnlyMode && (
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <MessageActions
                   messageId={message.messageId}
