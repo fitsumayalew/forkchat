@@ -31,9 +31,10 @@ interface ChatListProps {
   onBranch?: (messageId: string) => void
   onRetry?: (messageId: string) => void
   onEdit?: (messageId: string) => void
+  onEditSave?: (messageId: string, newContent: string, model?: string) => void
 }
 
-export function ChatList({ messages, onCopy, onBranch, onRetry, onEdit }: ChatListProps) {
+export function ChatList({ messages, onCopy, onBranch, onRetry, onEdit, onEditSave }: ChatListProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [showScrollToBottom, setShowScrollToBottom] = useState(false)
   const [autoScroll, setAutoScroll] = useState(true)
@@ -98,6 +99,7 @@ export function ChatList({ messages, onCopy, onBranch, onRetry, onEdit }: ChatLi
               onBranch={onBranch}
               onRetry={onRetry}
               onEdit={onEdit}
+              onEditSave={onEditSave}
             />
           ))}
         </div>

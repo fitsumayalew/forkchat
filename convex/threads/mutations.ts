@@ -16,6 +16,7 @@ export const update = mutation({
       folderId: v.optional(v.union(v.id("folders"), v.null())),
       userSetTitle: v.optional(v.boolean()),
       visibility: v.optional(v.union(v.literal("visible"), v.literal("archived"))),
+      isPublic: v.optional(v.boolean()),
     }),
   },
   handler: async (ctx, { threadId, updates }) => {
@@ -44,6 +45,7 @@ export const update = mutation({
     if (updates.pinned !== undefined) updateData.pinned = updates.pinned;
     if (updates.userSetTitle !== undefined) updateData.userSetTitle = updates.userSetTitle;
     if (updates.visibility !== undefined) updateData.visibility = updates.visibility;
+    if (updates.isPublic !== undefined) updateData.isPublic = updates.isPublic;
     
     // Handle folderId updates - null means remove from folder
     if (updates.folderId !== undefined) {
@@ -160,8 +162,6 @@ export const bulkDelete = mutation({
   },
 });
 
-
-
 export const updateThread = internalMutation({
   args: {
     threadId: v.string(),
@@ -181,5 +181,112 @@ export const updateThread = internalMutation({
     }
 
     await ctx.db.patch(thread._id, updates);
+  },
+});
+
+/**
+ * threads.toggleShare
+ * 
+ * Toggles the public sharing status of a thread.
+ */
+export const toggleShare = mutation({
+  args: { threadId: v.string() },
+  handler: async (ctx, { threadId }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Find the thread by threadId and userId to ensure ownership
+    const thread = await ctx.db
+      .query("threads")
+      .withIndex("by_user_and_threadId", (q) => 
+        q.eq("userId", userId).eq("threadId", threadId)
+      )
+      .unique();
+
+    if (!thread) {
+      throw new Error("Thread not found or access denied");
+    }
+
+    // Toggle the public status
+    const newIsPublic = !thread.isPublic;
+    
+    await ctx.db.patch(thread._id, {
+      isPublic: newIsPublic,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true, isPublic: newIsPublic } as const;
+  },
+});
+
+/**
+ * threads.copySharedThread
+ * 
+ * Purpose: Copies a public shared thread and all its messages to the current user's account.
+ * This allows users to continue a shared conversation in their own chat.
+ * How it's used: Called when a logged-in user clicks "Add to my chats" on a shared thread.
+ */
+export const copySharedThread = mutation({
+  args: { 
+    sharedThreadId: v.string(),
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, { sharedThreadId, title }) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    // Find the public thread
+    const sharedThread = await ctx.db
+      .query("threads")
+      .withIndex("by_threadId", (q) => q.eq("threadId", sharedThreadId))
+      .filter((q) => q.eq(q.field("isPublic"), true))
+      .first();
+
+    if (!sharedThread) {
+      throw new Error("Shared thread not found or not public");
+    }
+
+    // Generate a new thread ID for the copy
+    const newThreadId = crypto.randomUUID();
+
+    // Create the new thread
+    await ctx.db.insert("threads", {
+      threadId: newThreadId,
+      title: title || `Copy of ${sharedThread.title}`,
+      updatedAt: Date.now(),
+      lastMessageAt: Date.now(),
+      generationStatus: "completed",
+      visibility: "visible",
+      isPublic: false, // Default to private
+      userSetTitle: title ? true : false,
+      userId: userId,
+      model: sharedThread.model,
+      pinned: false,
+    });
+
+    // Copy all messages from the shared thread
+    const sharedMessages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread_and_userid", (q) => 
+        q.eq("threadId", sharedThreadId).eq("userId", sharedThread.userId)
+      )
+      .collect();
+
+    // Copy messages to the new thread
+    for (const message of sharedMessages) {
+      const { _id, _creationTime, ...messageData } = message;
+      await ctx.db.insert("messages", {
+        ...messageData,
+        threadId: newThreadId,
+        userId: userId,
+        messageId: crypto.randomUUID(), // Generate new message ID
+      });
+    }
+
+    return { 
+      success: true,
+      newThreadId,
+      message: "Chat copied successfully!"
+    };
   },
 });

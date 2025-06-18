@@ -114,15 +114,6 @@ export const addMessagesToThread = mutation({
 
     await ctx.db.insert("messages", userMessageData);
 
-    const messages = await ctx.db
-      .query("messages")
-      .withIndex("by_thread_and_userid", (q) =>
-        q.eq("threadId", threadId).eq("userId", userId),
-      )
-      .order("desc")
-      .collect();
-    messages.reverse();
-
     const assistantMessageId = crypto.randomUUID();
 
     const messageId = await ctx.db.insert("messages", {
@@ -144,6 +135,15 @@ export const addMessagesToThread = mutation({
       lastMessageAt: now,
     });
 
+    // Fetch all messages including the newly created assistant message
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread_and_userid", (q) =>
+        q.eq("threadId", threadId).eq("userId", userId),
+      )
+      .order("asc")
+      .collect();
+
     ctx.scheduler.runAfter(0, internal.ai.chat.chat, { messages, messageId, shouldGenerateTitle: !!newThread});
 
     return {
@@ -163,11 +163,10 @@ export const createBranch = mutation({
   args: {
     originalThreadId: v.string(),
     branchFromMessageId: v.string(),
-    newThreadTitle: v.optional(v.string()),
   },
   handler: async (
     ctx,
-    { originalThreadId, branchFromMessageId, newThreadTitle },
+    { originalThreadId, branchFromMessageId },
   ) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
@@ -222,7 +221,7 @@ export const createBranch = mutation({
     // Create new thread
     const newThread = {
       threadId: newThreadId,
-      title: newThreadTitle || `Branch from ${originalThread.title}`,
+      title: originalThread.title,
       updatedAt: now,
       lastMessageAt: now,
       generationStatus: "completed" as const,
@@ -342,6 +341,7 @@ export const editMessage = mutation({
       updated_at: now,
       model: model || message.model,
       modelParams: modelParams || message.modelParams,
+      parts: [{ type: "text" as const, text: _newContent }],
     });
 
     // Create a new assistant message for the AI response
@@ -350,7 +350,6 @@ export const editMessage = mutation({
       messageId: assistantMessageId,
       threadId: message.threadId,
       userId,
-      content: "",
       role: "assistant" as const,
       status: "waiting" as const,
       model: model || message.model,
@@ -359,7 +358,7 @@ export const editMessage = mutation({
       updated_at: now,
     };
 
-    await ctx.db.insert("messages", assistantMessageData);
+    const assistantMessage = await ctx.db.insert("messages", assistantMessageData);
 
     // Update thread status
     const thread = await ctx.db
@@ -376,6 +375,17 @@ export const editMessage = mutation({
         lastMessageAt: now,
       });
     }
+
+    // Refetch all messages including the newly created assistant message
+    const updatedMessages = await ctx.db
+      .query("messages")
+      .withIndex("by_thread_and_userid", (q) =>
+        q.eq("threadId", message.threadId).eq("userId", userId),
+      )
+      .order("asc")
+      .collect();
+
+    ctx.scheduler.runAfter(0, internal.ai.chat.chat, { messages: updatedMessages, messageId: assistantMessage, shouldGenerateTitle: false});
 
     return {
       success: true,

@@ -11,7 +11,7 @@
     "build": "tsc -b && vite build",
     "lint": "tsc && eslint .  --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "deploy": "bun run build && wrangler deploy"
+    "deploy": "bunx convex deploy --cmd 'bun run build && wrangler deploy'"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.19",

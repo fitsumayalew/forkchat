@@ -2,7 +2,13 @@ import { Button } from "@/components/ui/button"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useTheme } from "@/components/ThemeProvider"
 import { ModelSelector } from "@/components/chat/ModelSelector"
+import { ShareDialog } from "@/components/chat/ShareDialog"
+import { Share2 } from "lucide-react"
 import * as React from "react"
+
+interface SiteHeaderProps {
+  threadId?: string
+}
 
 function SunIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -16,8 +22,10 @@ function MoonIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ threadId }: SiteHeaderProps) {
   const { theme, setTheme } = useTheme();
+  const [shareDialogOpen, setShareDialogOpen] = React.useState(false);
+  
   // Determine the current theme (system, dark, or light)
   const [resolvedTheme, setResolvedTheme] = React.useState<"dark" | "light">("light");
   React.useEffect(() => {
@@ -29,24 +37,49 @@ export function SiteHeader() {
     }
   }, [theme]);
   const isDark = resolvedTheme === "dark";
+  
   return (
-    <header className="sticky top-0 z-50 shrink-0 flex h-(--header-height) items-center justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-border/40 dark:border-border/40 shadow-sm">
-      <div className="flex items-center gap-3 px-4 lg:px-6">
-        <SidebarTrigger className="hover:bg-muted dark:hover:bg-muted" />
-        <ModelSelector />
-      </div>
-      
-      <div className="flex items-center px-4 lg:px-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label="Toggle theme"
-          onClick={() => setTheme(isDark ? "light" : "dark")}
-          className="hover:bg-muted dark:hover:bg-muted"
-        >
-          {isDark ? <SunIcon className="size-5" /> : <MoonIcon className="size-5" />}
-        </Button>
-      </div>
-    </header>
+    <>
+      <header className="sticky top-0 z-50 shrink-0 flex h-(--header-height) items-center justify-between transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height) bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-border/40 dark:border-border/40 shadow-sm">
+        <div className="flex items-center gap-3 px-4 lg:px-6">
+          <SidebarTrigger className="hover:bg-muted dark:hover:bg-muted" />
+          <ModelSelector />
+        </div>
+        
+        <div className="flex items-center gap-2 px-4 lg:px-6">
+          {/* Share button - only show when we have a threadId */}
+          {threadId && (
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Share conversation"
+              onClick={() => setShareDialogOpen(true)}
+              className="hover:bg-muted dark:hover:bg-muted"
+            >
+              <Share2 className="size-5" />
+            </Button>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle theme"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className="hover:bg-muted dark:hover:bg-muted"
+          >
+            {isDark ? <SunIcon className="size-5" /> : <MoonIcon className="size-5" />}
+          </Button>
+        </div>
+      </header>
+
+      {/* Share Dialog */}
+      {threadId && (
+        <ShareDialog
+          isOpen={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          threadId={threadId}
+        />
+      )}
+    </>
   )
 }

@@ -46,6 +46,7 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<Id<'folders'>>>(new Set())
   const [isFoldersCollapsed, setIsFoldersCollapsed] = useState(false)
   const [focusedIndex, setFocusedIndex] = useState(-1)
+  const [dragOverSection, setDragOverSection] = useState<string | null>(null)
   const commandPalette = useCommandPalette()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -244,28 +245,37 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
   }, [])
 
   // HTML5 drag and drop handlers for removing threads from folders
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-  }, [])
-
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
-    e.preventDefault()
-    const threadId = e.dataTransfer.getData('text/thread-id')
-    
-    if (threadId) {
-      try {
-        // Remove thread from folder (set folderId to null)
-        await updateThreadFolder({
-          threadId,
-          updates: { folderId: null },
-        })
-      } catch (error) {
-        console.error('Failed to remove thread from folder:', error)
-        alert(error instanceof Error ? error.message : 'Failed to remove thread from folder')
+  const createSectionHandlers = useCallback((sectionId: string) => ({
+    onDragOver: (e: React.DragEvent) => {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+      setDragOverSection(sectionId)
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      // Only clear if we're actually leaving the section (not just moving to a child)
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+        setDragOverSection(null)
+      }
+    },
+    onDrop: async (e: React.DragEvent) => {
+      e.preventDefault()
+      setDragOverSection(null)
+      const threadId = e.dataTransfer.getData('text/thread-id')
+      
+      if (threadId) {
+        try {
+          // Remove thread from folder (set folderId to null)
+          await updateThreadFolder({
+            threadId,
+            updates: { folderId: null },
+          })
+        } catch (error) {
+          console.error('Failed to remove thread from folder:', error)
+          alert(error instanceof Error ? error.message : 'Failed to remove thread from folder')
+        }
       }
     }
-  }, [updateThreadFolder])
+  }), [updateThreadFolder])
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event
@@ -440,12 +450,19 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
           {/* Pinned Threads */}
           {pinnedThreads.length > 0 && (
             <>
-              <div>
+              <div
+                {...createSectionHandlers('pinned')}
+                className={`rounded-lg transition-colors duration-150 ${
+                  dragOverSection === 'pinned' 
+                    ? 'bg-accent/40 ring-2 ring-blue-500/50' 
+                    : 'hover:bg-accent/20'
+                }`}
+              >
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 px-1">
                   Pinned
                 </h3>
                 <div className="space-y-1">
-                  {pinnedThreads.map((thread, index) => {
+                  {pinnedThreads.map((thread) => {
                     const globalIndex = allNavigableItems.findIndex(item => item.threadId === thread.threadId)
                     return (
                       <ThreadItem
@@ -530,9 +547,12 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
           <div className="space-y-5">
             {groupedThreads.today.length > 0 && (
               <div
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                className="rounded-lg transition-colors duration-150 hover:bg-accent/20"
+                {...createSectionHandlers('today')}
+                className={`rounded-lg transition-colors duration-150 ${
+                  dragOverSection === 'today' 
+                    ? 'bg-accent/40 ring-2 ring-blue-500/50' 
+                    : 'hover:bg-accent/20'
+                }`}
               >
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
                   Today
@@ -555,9 +575,12 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
 
             {groupedThreads.yesterday.length > 0 && (
               <div
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                className="rounded-lg transition-colors duration-150 hover:bg-accent/20"
+                {...createSectionHandlers('yesterday')}
+                className={`rounded-lg transition-colors duration-150 ${
+                  dragOverSection === 'yesterday' 
+                    ? 'bg-accent/40 ring-2 ring-blue-500/50' 
+                    : 'hover:bg-accent/20'
+                }`}
               >
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
                   Yesterday
@@ -580,9 +603,12 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
 
             {groupedThreads.lastWeek.length > 0 && (
               <div
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                className="rounded-lg transition-colors duration-150 hover:bg-accent/20"
+                {...createSectionHandlers('lastWeek')}
+                className={`rounded-lg transition-colors duration-150 ${
+                  dragOverSection === 'lastWeek' 
+                    ? 'bg-accent/40 ring-2 ring-blue-500/50' 
+                    : 'hover:bg-accent/20'
+                }`}
               >
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
                   Last 7 Days
@@ -604,7 +630,14 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
             )}
 
             {groupedThreads.lastMonth.length > 0 && (
-              <div>
+              <div
+                {...createSectionHandlers('lastMonth')}
+                className={`rounded-lg transition-colors duration-150 ${
+                  dragOverSection === 'lastMonth' 
+                    ? 'bg-accent/40 ring-2 ring-blue-500/50' 
+                    : 'hover:bg-accent/20'
+                }`}
+              >
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
                   Last 30 Days
                 </h3>
@@ -625,7 +658,14 @@ export function SidebarContent({ activeThreadId }: SidebarContentProps) {
             )}
 
             {groupedThreads.older.length > 0 && (
-              <div>
+              <div
+                {...createSectionHandlers('older')}
+                className={`rounded-lg transition-colors duration-150 ${
+                  dragOverSection === 'older' 
+                    ? 'bg-accent/40 ring-2 ring-blue-500/50' 
+                    : 'hover:bg-accent/20'
+                }`}
+              >
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
                   Older
                 </h3>

@@ -28,6 +28,7 @@ interface MarkdownContentProps {
   onBranch?: (messageId: string) => void
   onRetry?: (messageId: string) => void
   onEdit?: (messageId: string) => void
+  onEditSave?: (messageId: string, newContent: string, model?: string) => void
 }
 
 export function MarkdownContent({ 
@@ -35,7 +36,8 @@ export function MarkdownContent({
   onCopy, 
   onBranch, 
   onRetry,
-  onEdit
+  onEdit,
+  onEditSave
 }: MarkdownContentProps) {
   if (message.role === 'user') {
     return (
@@ -47,6 +49,7 @@ export function MarkdownContent({
         onCopy={onCopy}
         onRetry={onRetry}
         onEdit={onEdit}
+        onEditSave={onEditSave}
       />
     )
   }

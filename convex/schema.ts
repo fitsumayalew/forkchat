@@ -77,6 +77,7 @@ export default defineSchema({
       v.literal("failed"),
     ),
     visibility: v.union(v.literal("visible"), v.literal("archived")),
+    isPublic: v.optional(v.boolean()),
     userSetTitle: v.optional(v.boolean()),
     userId: v.string(),
     folderId: v.optional(v.id("folders")),
@@ -90,6 +91,7 @@ export default defineSchema({
     .index("by_user_and_threadId", ["userId", "threadId"])
     .index("by_userId_and_updatedAt", ["userId", "updatedAt"])
     .index("by_user_and_pinned", ["userId", "pinned"])
+    .index("by_public_threads", ["isPublic"])
     .searchIndex("search_title", {
       searchField: "title",
       filterFields: ["userId"],

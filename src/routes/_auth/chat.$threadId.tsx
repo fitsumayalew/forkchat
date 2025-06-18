@@ -20,9 +20,9 @@ function ChatPage() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant='inset' />
+      <AppSidebar variant='inset' activeThreadId={threadId} />
       <SidebarInset className="flex flex-col h-screen overflow-hidden">
-        <SiteHeader />
+        <SiteHeader threadId={threadId} />
         <ChatInterface threadId={threadId} />
       </SidebarInset>
     </SidebarProvider>

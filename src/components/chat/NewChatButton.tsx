@@ -6,79 +6,7 @@ interface NewChatButtonProps {
   className?: string
 }
 
-const SAMPLE_MARKDOWN = `# Welcome to Enhanced ForkChat! 🚀
 
-This chat interface now features **significantly improved** markdown and code highlighting capabilities.
-
-## Features Overview
-
-### 🎨 Enhanced Code Highlighting
-- **Shiki-powered** syntax highlighting with 100+ languages
-- **Line numbers** for better readability
-- **Diff highlighting** for code changes
-- **Copy & download** functionality
-- **Automatic theme switching** (light/dark)
-
-\`\`\`typescript
-// TypeScript example with enhanced highlighting
-interface ChatMessage {
-  id: string
-  content: string
-  role: 'user' | 'assistant'
-  timestamp: Date
-}
-
-const processMessage = async (message: ChatMessage): Promise<void> => {
-  // Advanced syntax highlighting in action!
-  console.log(\`Processing message: \${message.content}\`)
-}
-\`\`\`
-
-### 📊 Interactive Tables
-Tables now have search, sort, and export capabilities:
-
-| Feature | Status | Priority |
-|---------|--------|----------|
-| Search | ✅ Complete | High |
-| Sort | ✅ Complete | High |
-| Export | ✅ Complete | Medium |
-| Filter | 🔄 In Progress | Low |
-
-### 📈 Mermaid Diagrams
-Create beautiful diagrams directly in markdown:
-
-\`\`\`mermaid
-graph TD
-    A[User Input] --> B{Process Request}
-    B -->|Valid| C[Generate Response]
-    B -->|Invalid| D[Show Error]
-    C --> E[Display Result]
-    D --> E
-\`\`\`
-
-### 💡 Enhanced Callouts
-
-> [!NOTE]
-> This is a note callout with improved styling and icons.
-
-> [!WARNING]
-> Important warnings are now more visible and accessible.
-
-> [!TIP]
-> Pro tips stand out with beautiful styling and clear visual hierarchy.
-
-### 🔗 Better Links & Typography
-Links now have [enhanced hover states](https://example.com) and improved accessibility.
-
-### ⚡ Performance Improvements
-- **Caching** for syntax highlighting
-- **Lazy loading** for large code blocks
-- **Optimized rendering** for better performance
-
----
-
-**Ready to experience the enhanced chat interface?** Start typing your message below!
-`
 
 export function NewChatButton({ onClick, className = '' }: NewChatButtonProps) {
   return (

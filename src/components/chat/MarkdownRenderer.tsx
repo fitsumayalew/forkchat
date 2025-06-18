@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import React, { useEffect, useRef, useMemo, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -96,6 +96,11 @@ const MermaidDiagram = React.memo(function MermaidDiagram({ code, id }: { code: 
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-blue-600 rounded-full"></div>
           Rendering diagram...
+        </div>
+      )}
+      {error && (
+        <div className="text-red-600 dark:text-red-400 text-sm font-medium">
+          {"Error rendering diagram!"}
         </div>
       )}
       <div ref={ref} className="max-w-full overflow-x-auto" />

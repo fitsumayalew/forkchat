@@ -1,6 +1,7 @@
 // React import not needed with new JSX transform
 import { useQuery } from '@tanstack/react-query'
-import { convexQuery } from '@convex-dev/react-query'
+import { convexQuery, useConvexMutation } from '@convex-dev/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { MessageInput } from './MessageInput'
 import { ChatList } from './ChatList'
 import { Icon } from '../Icon'
@@ -57,6 +58,12 @@ const convertMessage = (dbMessage: DatabaseMessage) => {
 }
 
 export function ChatInterface({ threadId }: ChatInterfaceProps) {
+  const navigate = useNavigate()
+  
+  // Convex mutations
+  const editMessageMutation = useConvexMutation(api.messages.mutations.editMessage)
+  const createBranchMutation = useConvexMutation(api.messages.mutations.createBranch)
+
   // Fetch messages for the thread if threadId is provided
   const messagesQuery = useQuery({
     ...convexQuery(api.messages.queries.getByThreadId, { 
@@ -95,24 +102,92 @@ export function ChatInterface({ threadId }: ChatInterfaceProps) {
     )
   }
 
-  // Handle message actions (simplified for now)
+  // Handle message actions - now fully implemented
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text)
   }
 
-  const handleBranch = (messageId: string) => {
-    console.log('Branch message:', messageId)
-    // TODO: Implement branching functionality
+  const handleBranch = async (messageId: string) => {
+    if (!threadId) return
+
+    try {
+      const result = await createBranchMutation({
+        originalThreadId: threadId,
+        branchFromMessageId: messageId,
+      })
+
+      if (result.success) {
+        // Navigate to the new branched thread
+        navigate({ 
+          to: '/chat/$threadId', 
+          params: { threadId: result.newThreadId } 
+        })
+      }
+    } catch (error) {
+      console.error('Failed to create branch:', error)
+      // TODO: Show error toast/notification
+    }
   }
 
-  const handleRetry = (messageId: string) => {
-    console.log('Retry message:', messageId)
-    // TODO: Implement retry functionality
+  const handleRetry = async (messageId: string) => {
+    if (!threadId || !messagesQuery.data) return
+
+    try {
+      // Find the assistant message that's being retried
+      const messages = messagesQuery.data
+      const assistantMessageIndex = messages.findIndex(msg => msg.messageId === messageId)
+      
+      if (assistantMessageIndex === -1) return
+
+      // Find the preceding user message
+      let userMessageIndex = -1
+      for (let i = assistantMessageIndex - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          userMessageIndex = i
+          break
+        }
+      }
+
+      if (userMessageIndex === -1) return
+
+      const userMessage = messages[userMessageIndex]
+      
+      // Get the text content from the first text part
+      const textContent = userMessage.parts?.find(part => part.type === 'text')?.text || ''
+      
+      // Re-submit the user message to trigger a new assistant response
+      await editMessageMutation({
+        messageId: userMessage.messageId,
+        newContent: textContent,
+        // Could add model selection here if needed
+      })
+    } catch (error) {
+      console.error('Failed to retry message:', error)
+      // TODO: Show error toast/notification
+    }
   }
 
   const handleEdit = (messageId: string) => {
+    // For user messages, this will be handled by the UserMessageBubble component
+    // entering edit mode (switching to textarea) rather than immediately calling a mutation
     console.log('Edit message:', messageId)
-    // TODO: Implement edit functionality
+    // The actual editing logic is handled in UserMessageBubble when it enters edit mode
+    // and calls handleEditSave when the user clicks "Save & Submit"
+  }
+
+  const handleEditSave = async (messageId: string, newContent: string, model?: string) => {
+    if (!threadId) return
+
+    try {
+      await editMessageMutation({
+        messageId,
+        newContent,
+        ...(model && { model }),
+      })
+    } catch (error) {
+      console.error('Failed to edit message:', error)
+      // TODO: Show error toast/notification
+    }
   }
 
   // Convert database messages to component format
@@ -144,6 +219,7 @@ export function ChatInterface({ threadId }: ChatInterfaceProps) {
             onBranch={handleBranch}
             onRetry={handleRetry}
             onEdit={handleEdit}
+            onEditSave={handleEditSave}
           />
         )}
       </div>

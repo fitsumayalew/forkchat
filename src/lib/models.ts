@@ -69,7 +69,7 @@ export const models = {
     fullDescription:
       "Like gpt-4o, but faster. This model sacrifices some of the original GPT-4o's precision for significantly reduced latency. It accepts both text and image inputs.",
 
-    disabled: false,
+    disabled: true,
 
     limits: { maxInputTokens: 128e3, maxOutputTokens: 16384 },
     features: ["images", "parameters"],

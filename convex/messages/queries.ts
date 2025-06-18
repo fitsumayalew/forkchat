@@ -27,3 +27,35 @@ export const getByThreadId = query({
   },
 });
 
+/**
+ * messages.getPublicByThreadId
+ * 
+ * Purpose: Retrieves all messages for a public shared thread.
+ * This doesn't require authentication and only works with public threads.
+ */
+export const getPublicByThreadId = query({
+  args: { threadId: v.string() },
+  handler: async (ctx, { threadId }) => {
+    // First check if the thread is public
+    const thread = await ctx.db
+      .query("threads")
+      .withIndex("by_threadId", (q) => q.eq("threadId", threadId))
+      .filter((q) => q.eq(q.field("isPublic"), true))
+      .filter((q) => q.eq(q.field("visibility"), "visible"))
+      .unique();
+
+    if (!thread) {
+      return null; // Thread not found or not public
+    }
+
+    // Fetch messages for the public thread
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_threadId", (q) => q.eq("threadId", threadId))
+      .order("desc")
+      .collect();
+
+    return messages.reverse();
+  },
+});
+

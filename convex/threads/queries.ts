@@ -95,3 +95,35 @@ export const search = query({
     return uniqueThreads.sort((a, b) => b.updatedAt - a.updatedAt);
   },
 });
+
+/**
+ * threads.getPublicThread
+ * 
+ * Purpose: Retrieves a public thread for sharing without requiring authentication.
+ * Includes sharer information (name, avatar) for display.
+ * How it's used: Called when someone accesses a shared thread via /share/threadId.
+ */
+export const getPublicThread = query({
+  args: { threadId: v.string() },
+  handler: async (ctx, { threadId }) => {
+    const thread = await ctx.db
+      .query("threads")
+      .withIndex("by_threadId", (q) => q.eq("threadId", threadId))
+      .filter((q) => q.eq(q.field("isPublic"), true))
+      .first();
+
+    if (!thread) return null;
+
+    // Get sharer information
+    const sharer = await ctx.db.get(thread.userId as any);
+    
+    return {
+      ...thread,
+      sharer: sharer ? {
+        name: (sharer as any).name || "Anonymous",
+        image: (sharer as any).image || "",
+        email: (sharer as any).email || "",
+      } : null
+    };
+  },
+});
